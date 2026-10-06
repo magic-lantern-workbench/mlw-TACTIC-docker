@@ -20,6 +20,8 @@ Change the admin password after your first login.
 
 ## Architecture
 
+For a diagram of the components and a detailed description of each, see the [architecture document](doc/mlw-TACTIC-docker_Architecture.docx).
+
 ```
 client -> proxy (nginx: TLS, static files, load balancing)
             -> tactic (monitor.py: 3 CherryPy workers on 8081-8083, auto-restarted)
