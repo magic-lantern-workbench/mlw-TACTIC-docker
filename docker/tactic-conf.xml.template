@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<config version="2">
+
+<install>
+    <hostname>${TACTIC_HOSTNAME}</hostname>
+    <tmp_dir>${TACTIC_TMP_DIR}</tmp_dir>
+    <log_type>stream</log_type>
+</install>
+
+<services>
+    <mailserver></mailserver>
+    <python>python</python>
+    <python_path></python_path>
+    <process_count>3</process_count>
+    <thread_count>50</thread_count>
+</services>
+
+<database>
+    <vendor>PostgreSQL</vendor>
+    <server>${DB_HOST}</server>
+    <port>${DB_PORT}</port>
+    <user>${DB_USER}</user>
+    <password>${DB_PASSWORD}</password>
+    <sobject_database>sthpw</sobject_database>
+    <pool_max_connections>0</pool_max_connections>
+</database>
+
+<security>
+    <version>2</version>
+    <ticket_expiry>10 hour</ticket_expiry>
+    <api_require_password>true</api_require_password>
+    <api_password></api_password>
+</security>
+
+<look>
+    <palette>AQUA</palette>
+</look>
+
+<checkin>
+    <asset_base_dir>${TACTIC_DATA_DIR}/assets</asset_base_dir>
+    <web_base_dir>/assets</web_base_dir>
+    <linux_local_base_dir>/tmp/sthpw</linux_local_base_dir>
+    <linux_sandbox_dir>/tmp/sthpw/sandbox</linux_sandbox_dir>
+    <sudo_no_password>false</sudo_no_password>
+    <version_padding>3</version_padding>
+</checkin>
+
+</config>

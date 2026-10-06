@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    volumes:
+      - tactic_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  tactic:
+    build:
+      context: .
+      args:
+        TACTIC_REPO: ${TACTIC_REPO:-https://github.com/magic-lantern-workbench/TACTIC.git}
+        TACTIC_REF: ${TACTIC_REF:-5.0}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      TACTIC_HOSTNAME: ${TACTIC_HOSTNAME:-localhost}
+    ports:
+      - "${TACTIC_PORT:-8081}:8081"
+    volumes:
+      - tactic_data:/opt/tactic/tactic_data
+      - tactic_temp:/opt/tactic/tactic_temp
+
+volumes:
+  tactic_db:
+  tactic_data:
+  tactic_temp:
