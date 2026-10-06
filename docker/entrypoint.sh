@@ -6,6 +6,7 @@ export DB_PORT="${DB_PORT:-5432}"
 export DB_USER="${DB_USER:-postgres}"
 export DB_PASSWORD="${DB_PASSWORD:-postgres}"
 export TACTIC_HOSTNAME="${TACTIC_HOSTNAME:-localhost}"
+export TACTIC_PROTOCOL="${TACTIC_PROTOCOL:-http}"
 
 CONF_DIR="${TACTIC_DATA_DIR}/config"
 CONF="${CONF_DIR}/tactic-conf.xml"
@@ -17,7 +18,7 @@ mkdir -p "${CONF_DIR}" "${TACTIC_DATA_DIR}/assets" "${TACTIC_DATA_DIR}/dist" "${
 
 # Render the config from env on first run only, so manual edits in the volume persist
 if [ ! -f "${CONF}" ]; then
-    envsubst '${TACTIC_HOSTNAME} ${TACTIC_TMP_DIR} ${TACTIC_DATA_DIR} ${DB_HOST} ${DB_PORT} ${DB_USER} ${DB_PASSWORD}' \
+    envsubst '${TACTIC_HOSTNAME} ${TACTIC_PROTOCOL} ${TACTIC_TMP_DIR} ${TACTIC_DATA_DIR} ${DB_HOST} ${DB_PORT} ${DB_USER} ${DB_PASSWORD}' \
         < /opt/tactic/tactic-conf.xml.template > "${CONF}"
 fi
 

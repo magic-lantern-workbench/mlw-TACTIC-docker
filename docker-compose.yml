@@ -1,25 +1,46 @@
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
 services:
   db:
     image: postgres:16
-    restart: unless-stopped
+    restart: always
+    init: true
+    logging: *default-logging
     environment:
       POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+    command:
+      - postgres
+      - -c
+      - shared_buffers=${PG_SHARED_BUFFERS:-256MB}
+      - -c
+      - effective_cache_size=${PG_EFFECTIVE_CACHE_SIZE:-768MB}
+      - -c
+      - max_connections=${PG_MAX_CONNECTIONS:-200}
     volumes:
       - tactic_db:/var/lib/postgresql/data
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
       retries: 10
 
   tactic:
     build:
       context: .
+      target: tactic
       args:
         TACTIC_REPO: ${TACTIC_REPO:-https://github.com/magic-lantern-workbench/TACTIC.git}
         TACTIC_REF: ${TACTIC_REF:-5.0}
-    restart: unless-stopped
+    image: mlw-tactic:${TACTIC_REF:-5.0}
+    restart: always
+    logging: *default-logging
     depends_on:
       db:
         condition: service_healthy
@@ -27,13 +48,41 @@ services:
       DB_HOST: db
       DB_PORT: "5432"
       DB_USER: ${DB_USER:-postgres}
-      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
       TACTIC_HOSTNAME: ${TACTIC_HOSTNAME:-localhost}
-    ports:
-      - "${TACTIC_PORT:-8081}:8081"
+      TACTIC_PROTOCOL: ${TACTIC_PROTOCOL:-http}
+      # Worker ports; must match docker/nginx/tactic-upstream.inc
+      TACTIC_PORTS: "8081|8082|8083"
     volumes:
       - tactic_data:/opt/tactic/tactic_data
       - tactic_temp:/opt/tactic/tactic_temp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          memory: ${TACTIC_MEM_LIMIT:-4g}
+
+  proxy:
+    build:
+      context: .
+      target: proxy
+    image: mlw-tactic-proxy:${TACTIC_REF:-5.0}
+    restart: always
+    logging: *default-logging
+    depends_on:
+      - tactic
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - tactic_data:/opt/tactic/tactic_data:ro
+      # Put tls.crt and tls.key here to enable HTTPS
+      - ${TLS_CERT_DIR:-./certs}:/etc/nginx/certs:ro
+    security_opt:
+      - no-new-privileges:true
 
 volumes:
   tactic_db:

@@ -28,6 +28,7 @@
 <security>
     <version>2</version>
     <ticket_expiry>10 hour</ticket_expiry>
+    <protocol>${TACTIC_PROTOCOL}</protocol>
     <api_require_password>true</api_require_password>
     <api_password></api_password>
 </security>
