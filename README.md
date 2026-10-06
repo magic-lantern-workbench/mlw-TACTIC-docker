@@ -22,6 +22,8 @@ Change the admin password after your first login.
 
 For a diagram of the components and a detailed description of each, see the [architecture document](doc/mlw-TACTIC-docker_Architecture.docx).
 
+For every table and column in the `sthpw` system database, see the [sthpw schema document](doc/mlw-TACTIC-docker_sthpw_Schema.docx).
+
 ```
 client -> proxy (nginx: TLS, static files, load balancing)
             -> tactic (monitor.py: 3 CherryPy workers on 8081-8083, auto-restarted)
