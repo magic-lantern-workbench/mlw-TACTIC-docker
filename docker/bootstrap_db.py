@@ -49,5 +49,7 @@ from pyasm.security import Batch
 Batch()
 with open("%s/VERSION" % __import__("os").environ["TACTIC_INSTALL_DIR"]) as f:
     version = f.readline().strip()
-Upgrade(version, is_forced=True, project_code=None, quiet=True).execute()
+# is_confirmed answers the upgrade step that would otherwise prompt "Run now? (y/n)".
+# With no terminal that prompt raises EOFError and aborts every later upgrade step.
+Upgrade(version, is_forced=True, project_code=None, quiet=True, is_confirmed=True).execute()
 print("TACTIC database installed.")

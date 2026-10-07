@@ -1,6 +1,6 @@
 # mlw-TACTIC-docker
 
-Docker and Docker Compose setup for [TACTIC](https://github.com/magic-lantern-workbench/TACTIC), running the app server against a PostgreSQL database.
+Docker and Docker Compose setup for [TACTIC](https://github.com/magic-lantern-workbench/TACTIC), configured for VFX production: the app server runs against a PostgreSQL database and a VFX project is created from TACTIC's built-in VFX plugin on first start.
 
 The image clones TACTIC at build time (this repo contains no TACTIC source), installs its Python dependencies, and runs it on CherryPy. On first start the `sthpw` database is created and populated automatically.
 
@@ -11,12 +11,34 @@ cp .env.example .env      # then edit .env and set DB_PASSWORD (required)
 docker compose up -d --build
 ```
 
-The first start takes about 30 seconds while the database is created. Then open <http://localhost/tactic> and log in with:
+The first start takes about 30 seconds while the database is created. Then open <http://localhost/tactic/vfx> for the VFX project (or <http://localhost/tactic> for the project list) and log in with:
 
 - **Username:** `admin`
 - **Password:** `tactic`
 
 Change the admin password after your first login.
+
+## VFX production
+
+On first start the app installs TACTIC's built-in VFX plugin (`src/plugins/TACTIC/vfx`) into a new project, the same way the Create Project dialog does when you pick "VFX (built in)". The project gets its own database and includes:
+
+- **Data model:** episodes, sequences, shots, assets, plates, layers, cameras, textures, renders, reviews, submissions, storyboards, schedules and the joins between them (`vfx/shot`, `vfx/asset_in_shot`, and so on).
+- **Pipelines:** a shot pipeline and an asset pipeline (Model, Layout, Animation, Effects, Lighting, Assemble, Render, Compositing and others), with task creation and status tracking.
+- **Interface configuration:** the shot planner, custom layouts, side bar, naming conventions and triggers that ship with the plugin.
+
+The installer is skipped when the project already exists, so restarts are safe. To change it, set these in `.env` before the first start:
+
+| Variable            | Default | Description                                                    |
+|---------------------|---------|----------------------------------------------------------------|
+| `VFX_ENABLED`       | `true`  | Set to `false` to start with the system database only          |
+| `VFX_PROJECT_CODE`  | `vfx`   | Project code; also the name of the project's database          |
+| `VFX_PROJECT_TITLE` | `VFX`   | Title shown in the interface                                   |
+
+The image includes the tools TACTIC calls for media: ImageMagick (thumbnails and web proxies), FFmpeg and ffprobe (video, review media), Ghostscript (PDF and EPS) and ExifTool (metadata).
+
+**Frame formats.** DPX, Cineon, TIFF, JPEG 2000, PNG and JPEG are handled by ImageMagick. EXR is not: Debian's ImageMagick is built without OpenEXR, so EXR frames can be checked in and stored, but TACTIC will not make thumbnails or web proxies for them. FFmpeg can read EXR, so proxies can be made outside TACTIC and checked in alongside.
+
+**Media storage.** Check-ins are stored in the `tactic_assets` volume. For a real production, point `TACTIC_ASSETS` at a host path such as a NAS mount. The path must be writable by uid 1000, which is the `tactic` user inside the container.
 
 ## Architecture
 
@@ -60,6 +82,8 @@ Settings are read from `.env` (see `.env.example`):
 | `TACTIC_REPO`             | `https://github.com/magic-lantern-workbench/TACTIC.git` | Git repo cloned at build time                    |
 | `TACTIC_REF`              | `5.0`                                                   | Branch or tag to build; pin a tag for production |
 | `TACTIC_MEM_LIMIT`        | `4g`                                                    | Memory limit for the app container               |
+| `VFX_ENABLED`, `VFX_PROJECT_CODE`, `VFX_PROJECT_TITLE` | `true`, `vfx`, `VFX` | VFX project; see [VFX production](#vfx-production) |
+| `TACTIC_ASSETS`           | `tactic_assets` volume                                  | Docker volume name or host path for media        |
 | `PG_SHARED_BUFFERS`, `PG_EFFECTIVE_CACHE_SIZE`, `PG_MAX_CONNECTIONS` | `256MB`, `768MB`, `200` | PostgreSQL tuning |
 
 `TACTIC_REPO` and `TACTIC_REF` are build arguments, so changing them requires `docker compose build`.
@@ -84,7 +108,8 @@ Named volumes keep state across restarts:
 | Volume         | Mount                          | Contents                       |
 |----------------|--------------------------------|--------------------------------|
 | `tactic_db`    | `/var/lib/postgresql/data`     | PostgreSQL data                |
-| `tactic_data`  | `/opt/tactic/tactic_data`      | Config, assets, project templates |
+| `tactic_data`  | `/opt/tactic/tactic_data`      | Config and project templates   |
+| `tactic_assets` (or `TACTIC_ASSETS`) | `/opt/tactic/tactic_data/assets` | Checked-in media |
 | `tactic_temp`  | `/opt/tactic/tactic_temp`      | Temp and upload files          |
 
 `tactic-conf.xml` is generated from the environment variables **only on first run**. Later changes to `.env` (for example `DB_PASSWORD`) do not update it. Edit `/opt/tactic/tactic_data/config/tactic-conf.xml` in the `tactic_data` volume, or run `docker compose down -v` to start fresh. The Postgres password is also fixed at first initialisation of `tactic_db`.
@@ -97,9 +122,14 @@ docker compose exec -T db pg_dump -U postgres -Fc sthpw > sthpw-$(date +%F).dump
 # Restore into an empty database
 docker compose exec -T db pg_restore -U postgres -d sthpw --clean < sthpw-YYYY-MM-DD.dump
 
-# Assets and config (the tactic_data volume)
-docker run --rm -v mlw-tactic-docker_tactic_data:/data -v "$PWD":/backup alpine \
-    tar czf /backup/tactic_data-$(date +%F).tgz -C /data .
+# VFX project database (also dump sthpw as above)
+docker compose exec -T db pg_dump -U postgres -Fc vfx > vfx-$(date +%F).dump
+
+# Config and media (the tactic_data and tactic_assets volumes)
+for v in tactic_data tactic_assets; do
+  docker run --rm -v mlw-tactic-docker_$v:/data -v "$PWD":/backup alpine \
+      tar czf /backup/$v-$(date +%F).tgz -C /data .
+done
 ```
 
 The volume name is prefixed with your compose project name (the directory name by default); check `docker volume ls`.

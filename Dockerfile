@@ -47,7 +47,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         gettext-base postgresql-client tini \
-        imagemagick ffmpeg \
+        imagemagick ffmpeg ghostscript libimage-exiftool-perl \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --create-home --shell /usr/sbin/nologin tactic
 
@@ -56,9 +56,10 @@ COPY --from=build /opt/tactic /opt/tactic
 
 COPY docker/tactic-conf.xml.template /opt/tactic/tactic-conf.xml.template
 COPY docker/bootstrap_db.py /opt/tactic/bootstrap_db.py
+COPY docker/bootstrap_vfx.py /opt/tactic/bootstrap_vfx.py
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh \
-    && mkdir -p "${TACTIC_DATA_DIR}" "${TACTIC_TMP_DIR}" \
+    && mkdir -p "${TACTIC_DATA_DIR}/assets" "${TACTIC_TMP_DIR}" \
     && chown -R tactic:tactic "${TACTIC_DATA_DIR}" "${TACTIC_TMP_DIR}"
 
 USER tactic
