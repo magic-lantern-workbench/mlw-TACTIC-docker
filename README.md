@@ -46,6 +46,8 @@ For a diagram of the components and a detailed description of each, see the [arc
 
 For every table and column in the `sthpw` system database, see the [sthpw schema document](doc/mlw-TACTIC-docker_sthpw_Schema.docx).
 
+For every table and column in the VFX project database, see the [VFX schema document](doc/mlw-TACTIC-docker_vfx_Schema.docx).
+
 ```
 client -> proxy (nginx: TLS, static files, load balancing)
             -> tactic (monitor.py: 3 CherryPy workers on 8081-8083, auto-restarted)
