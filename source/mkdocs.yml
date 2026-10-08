@@ -16,3 +16,5 @@ nav:
   - Database and storage: database-storage.md
   - Configuration: configuration.md
   - Security and operations: operations.md
+extra_css:
+  - css/extra.css
