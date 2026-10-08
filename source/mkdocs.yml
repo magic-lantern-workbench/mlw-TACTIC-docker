@@ -1,0 +1,18 @@
+site_name: mlw-TACTIC-docker
+site_description: Docker deployment of TACTIC for Magic Lantern Workbench production
+site_url: https://magic-lantern-workbench.github.io/mlw-TACTIC-docker/
+repo_url: https://github.com/magic-lantern-workbench/mlw-TACTIC-docker
+repo_name: magic-lantern-workbench/mlw-TACTIC-docker
+edit_uri: ""
+theme:
+  name: readthedocs
+  highlightjs: true
+nav:
+  - Overview: index.md
+  - Request flow: request-flow.md
+  - Proxy: proxy.md
+  - Application: application.md
+  - MLW project: mlw-project.md
+  - Database and storage: database-storage.md
+  - Configuration: configuration.md
+  - Security and operations: operations.md

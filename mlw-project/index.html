@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://magic-lantern-workbench.github.io/mlw-TACTIC-docker/mlw-project/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>MLW project - mlw-TACTIC-docker</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "MLW project";
+        var mkdocs_page_input_path = "mlw-project.md";
+        var mkdocs_page_url = "/mlw-TACTIC-docker/mlw-project/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> mlw-TACTIC-docker
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Overview</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../request-flow/">Request flow</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../proxy/">Proxy</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../application/">Application</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="./">MLW project</a>
+    <ul class="current">
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../database-storage/">Database and storage</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../configuration/">Configuration</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../operations/">Security and operations</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">mlw-TACTIC-docker</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">MLW project</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="mlw-project">MLW project</h1>
+<p><code>docker/bootstrap_project.py</code> does what the Create Project dialog does when a built-in template is chosen. It runs TACTIC's <code>ProjectTemplateInstallerCmd</code> with the plugin directory <code>src/plugins/TACTIC/&lt;plugin&gt;</code>, where the plugin is <code>mlw</code> unless <code>TACTIC_PLUGIN</code> says otherwise. The <code>mlw</code> plugin comes from the <code>magiclantern</code> branch of the TACTIC repository. It is TACTIC's VFX template under the <code>mlw/</code> namespace: with <code>vfx</code> replaced by <code>mlw</code>, the two plugin directories are identical, so <code>TACTIC_PLUGIN=vfx</code> gives the same project under <code>vfx</code> names. The installer:</p>
+<ul>
+<li>creates a project (default code <code>mlw</code>) and a PostgreSQL database of the same name;</li>
+<li>registers the plugin's search types, 23 in the <code>mlw/</code> namespace, such as <code>mlw/shot</code>, <code>mlw/asset</code>, <code>mlw/sequence</code>, <code>mlw/plate</code> and <code>mlw/review</code>, and creates their tables in the project database;</li>
+<li>creates the shot and asset pipelines (workflow processes such as Layout, Animation, Effects, Lighting and Compositing);</li>
+<li>loads the interface configuration: about 200 widget configurations (views, layouts, the shot planner and side bar), naming rules, triggers, scripts and production settings.</li>
+</ul>
+<p>If the project already exists the script does nothing, so restarts are safe. <code>TACTIC_PROJECT_CODE</code> and <code>TACTIC_PROJECT_TITLE</code> set the code and title (they default to the plugin name); <code>TACTIC_PROJECT_ENABLED=false</code> skips the step so only the system database is created.</p>
+<p>Check-ins made in the project are stored in the <code>tactic_assets</code> volume. For each check-in TACTIC keeps the original and makes a web rendition and an icon. DPX, Cineon, TIFF, JPEG 2000, PNG and JPEG are handled by ImageMagick; video and review media use FFmpeg. EXR frames can be stored but get no thumbnail or web rendition, because Debian's ImageMagick is built without OpenEXR.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../application/" class="btn btn-neutral float-left" title="Application"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../database-storage/" class="btn btn-neutral float-right" title="Database and storage">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../application/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../database-storage/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
