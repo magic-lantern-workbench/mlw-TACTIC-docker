@@ -7,8 +7,9 @@ export DB_USER="${DB_USER:-postgres}"
 export DB_PASSWORD="${DB_PASSWORD:-postgres}"
 export TACTIC_HOSTNAME="${TACTIC_HOSTNAME:-localhost}"
 export TACTIC_PROTOCOL="${TACTIC_PROTOCOL:-http}"
-export VFX_PROJECT_CODE="${VFX_PROJECT_CODE:-vfx}"
-export VFX_PROJECT_TITLE="${VFX_PROJECT_TITLE:-VFX}"
+export TACTIC_PLUGIN="${TACTIC_PLUGIN:-mlw}"
+export TACTIC_PROJECT_CODE="${TACTIC_PROJECT_CODE:-${TACTIC_PLUGIN}}"
+export TACTIC_PROJECT_TITLE="${TACTIC_PROJECT_TITLE:-}"
 
 CONF_DIR="${TACTIC_DATA_DIR}/config"
 CONF="${CONF_DIR}/tactic-conf.xml"
@@ -31,9 +32,9 @@ done
 
 python /opt/tactic/bootstrap_db.py
 
-# Create the VFX production project from TACTIC's built-in VFX plugin (first start only)
-if [ "${VFX_ENABLED:-true}" = "true" ]; then
-    python /opt/tactic/bootstrap_vfx.py
+# Create the production project from a built-in TACTIC plugin (first start only)
+if [ "${TACTIC_PROJECT_ENABLED:-true}" = "true" ]; then
+    python /opt/tactic/bootstrap_project.py
 fi
 
 exec "$@"

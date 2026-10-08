@@ -1,6 +1,6 @@
 # mlw-TACTIC-docker
 
-Docker and Docker Compose setup for [TACTIC](https://github.com/magic-lantern-workbench/TACTIC), configured for VFX production: the app server runs against a PostgreSQL database and a VFX project is created from TACTIC's built-in VFX plugin on first start.
+Docker and Docker Compose setup for [TACTIC](https://github.com/magic-lantern-workbench/TACTIC), configured for Magic Lantern Workbench (MLW) production: the app server runs against a PostgreSQL database, and an MLW project is created on first start from the `mlw` plugin on the TACTIC `magiclantern` branch.
 
 The image clones TACTIC at build time (this repo contains no TACTIC source), installs its Python dependencies, and runs it on CherryPy. On first start the `sthpw` database is created and populated automatically.
 
@@ -11,28 +11,31 @@ cp .env.example .env      # then edit .env and set DB_PASSWORD (required)
 docker compose up -d --build
 ```
 
-The first start takes about 30 seconds while the database is created. Then open <http://localhost/tactic/vfx> for the VFX project (or <http://localhost/tactic> for the project list) and log in with:
+The first start takes about 30 seconds while the database is created. Then open <http://localhost/tactic/mlw> for the MLW project (or <http://localhost/tactic> for the project list) and log in with:
 
 - **Username:** `admin`
 - **Password:** `tactic`
 
 Change the admin password after your first login.
 
-## VFX production
+## MLW production project
 
-On first start the app installs TACTIC's built-in VFX plugin (`src/plugins/TACTIC/vfx`) into a new project, the same way the Create Project dialog does when you pick "VFX (built in)". The project gets its own database and includes:
+The image is built from the `magiclantern` branch of the TACTIC repository (`TACTIC_REF`), which adds the `mlw` plugin at `src/plugins/TACTIC/mlw`. On first start the app installs that plugin into a new project, the same way the Create Project dialog does for a built-in template. The project gets its own database (`mlw` by default) and includes:
 
-- **Data model:** episodes, sequences, shots, assets, plates, layers, cameras, textures, renders, reviews, submissions, storyboards, schedules and the joins between them (`vfx/shot`, `vfx/asset_in_shot`, and so on).
+- **Data model:** episodes, sequences, shots, assets, plates, layers, cameras, textures, renders, reviews, submissions, storyboards, schedules and the joins between them, under the `mlw/` namespace (`mlw/shot`, `mlw/asset_in_shot`, and so on).
 - **Pipelines:** a shot pipeline and an asset pipeline (Model, Layout, Animation, Effects, Lighting, Assemble, Render, Compositing and others), with task creation and status tracking.
 - **Interface configuration:** the shot planner, custom layouts, side bar, naming conventions and triggers that ship with the plugin.
 
+At the time of writing the `mlw` plugin is TACTIC's VFX template renamed: with `vfx` replaced by `mlw` in names and contents, the two plugin directories are identical. The VFX plugin is still in the image, so you can use it instead.
+
 The installer is skipped when the project already exists, so restarts are safe. To change it, set these in `.env` before the first start:
 
-| Variable            | Default | Description                                                    |
-|---------------------|---------|----------------------------------------------------------------|
-| `VFX_ENABLED`       | `true`  | Set to `false` to start with the system database only          |
-| `VFX_PROJECT_CODE`  | `vfx`   | Project code; also the name of the project's database          |
-| `VFX_PROJECT_TITLE` | `VFX`   | Title shown in the interface                                   |
+| Variable                 | Default                    | Description                                                              |
+|--------------------------|----------------------------|--------------------------------------------------------------------------|
+| `TACTIC_PROJECT_ENABLED` | `true`                     | Set to `false` to start with the system database only                    |
+| `TACTIC_PLUGIN`          | `mlw`                      | Plugin directory under `src/plugins/TACTIC`, for example `mlw` or `vfx`  |
+| `TACTIC_PROJECT_CODE`    | the plugin name            | Project code; also the name of the project's database                    |
+| `TACTIC_PROJECT_TITLE`   | the plugin name, capitals  | Title shown in the interface                                             |
 
 The image includes the tools TACTIC calls for media: ImageMagick (thumbnails and web proxies), FFmpeg and ffprobe (video, review media), Ghostscript (PDF and EPS) and ExifTool (metadata).
 
@@ -46,7 +49,7 @@ For a diagram of the components and a detailed description of each, see the [arc
 
 For every table and column in the `sthpw` system database, see the [sthpw schema document](doc/mlw-TACTIC-docker_sthpw_Schema.docx).
 
-For every table and column in the VFX project database, see the [VFX schema document](doc/mlw-TACTIC-docker_vfx_Schema.docx).
+For every table and column in the `mlw` project database, see the [MLW schema document](doc/mlw-TACTIC-docker_mlw_Schema.docx).
 
 ```
 client -> proxy (nginx: TLS, static files, load balancing)
@@ -82,9 +85,9 @@ Settings are read from `.env` (see `.env.example`):
 | `TACTIC_PROTOCOL`         | `http`                                                  | `https` when serving TLS                         |
 | `TLS_CERT_DIR`            | `./certs`                                               | Directory with `tls.crt` and `tls.key`           |
 | `TACTIC_REPO`             | `https://github.com/magic-lantern-workbench/TACTIC.git` | Git repo cloned at build time                    |
-| `TACTIC_REF`              | `5.0`                                                   | Branch or tag to build; pin a tag for production |
+| `TACTIC_REF`              | `magiclantern`                                          | Branch or tag to build; pin a tag for production |
 | `TACTIC_MEM_LIMIT`        | `4g`                                                    | Memory limit for the app container               |
-| `VFX_ENABLED`, `VFX_PROJECT_CODE`, `VFX_PROJECT_TITLE` | `true`, `vfx`, `VFX` | VFX project; see [VFX production](#vfx-production) |
+| `TACTIC_PROJECT_ENABLED`, `TACTIC_PLUGIN`, `TACTIC_PROJECT_CODE`, `TACTIC_PROJECT_TITLE` | `true`, `mlw`, plugin name, plugin name | Production project; see [MLW production project](#mlw-production-project) |
 | `TACTIC_ASSETS`           | `tactic_assets` volume                                  | Docker volume name or host path for media        |
 | `PG_SHARED_BUFFERS`, `PG_EFFECTIVE_CACHE_SIZE`, `PG_MAX_CONNECTIONS` | `256MB`, `768MB`, `200` | PostgreSQL tuning |
 
@@ -124,8 +127,8 @@ docker compose exec -T db pg_dump -U postgres -Fc sthpw > sthpw-$(date +%F).dump
 # Restore into an empty database
 docker compose exec -T db pg_restore -U postgres -d sthpw --clean < sthpw-YYYY-MM-DD.dump
 
-# VFX project database (also dump sthpw as above)
-docker compose exec -T db pg_dump -U postgres -Fc vfx > vfx-$(date +%F).dump
+# Project database (also dump sthpw as above)
+docker compose exec -T db pg_dump -U postgres -Fc mlw > mlw-$(date +%F).dump
 
 # Config and media (the tactic_data and tactic_assets volumes)
 for v in tactic_data tactic_assets; do

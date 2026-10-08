@@ -5,7 +5,7 @@ FROM python:3.11-slim AS build
 
 ARG TACTIC_REPO=https://github.com/magic-lantern-workbench/TACTIC.git
 # Branch or tag. Pin to a release tag for reproducible production builds.
-ARG TACTIC_REF=5.0
+ARG TACTIC_REF=magiclantern
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git gcc libc6-dev \
@@ -56,7 +56,7 @@ COPY --from=build /opt/tactic /opt/tactic
 
 COPY docker/tactic-conf.xml.template /opt/tactic/tactic-conf.xml.template
 COPY docker/bootstrap_db.py /opt/tactic/bootstrap_db.py
-COPY docker/bootstrap_vfx.py /opt/tactic/bootstrap_vfx.py
+COPY docker/bootstrap_project.py /opt/tactic/bootstrap_project.py
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh \
     && mkdir -p "${TACTIC_DATA_DIR}/assets" "${TACTIC_TMP_DIR}" \
