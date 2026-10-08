@@ -45,6 +45,8 @@ The image includes the tools TACTIC calls for media: ImageMagick (thumbnails and
 
 ## Architecture
 
+The documentation is also published as a website: <https://magic-lantern-workbench.github.io/mlw-TACTIC-docker/>.
+
 For a diagram of the components and a detailed description of each, see the [architecture document](doc/mlw-TACTIC-docker_Architecture.docx).
 
 For every table and column in the `sthpw` system database, see the [sthpw schema document](doc/mlw-TACTIC-docker_sthpw_Schema.docx).
